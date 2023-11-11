@@ -1,0 +1,74 @@
+using UnityEngine;
+
+public class playerMovement : MonoBehaviour
+{
+    public CharacterController cc;
+
+    [Header("Player Speeds")]
+    public float walkSpeed = 5f;
+    public float runSpeed = 10f;
+    private float movementSpeed;
+    [HideInInspector] public Vector3 moveVector;
+
+    [Header("Ground Controller")]
+    public Vector3 velocity;
+    [SerializeField] private bool isGrounded;
+    public Transform groundCheckTransform;
+    public float groundDistance;
+    public LayerMask groundLayerMask;
+    public float gravityScale;
+
+    [Header("Coyate Timer")]
+    public float groundedTimerDuration = 0.5f;
+    private float groundedTimer;
+
+
+    private void Update()
+    {
+        movementSpeed = (Input.GetKey(KeyCode.LeftShift)) ? runSpeed : walkSpeed;
+
+        isGrounded = Physics.CheckSphere(groundCheckTransform.position, groundDistance, groundLayerMask);
+        CoyateTimer();
+
+        if (isGrounded && velocity.y < 0)
+        {
+            velocity.y = -2f;
+        }
+
+        float moveX = Input.GetAxis("Horizontal");
+        float moveZ = Input.GetAxis("Vertical");
+
+        moveVector = transform.right * moveX + transform.forward * moveZ;
+        moveVector.Normalize();
+        moveVector *= moveVector.z < 0f ? movementSpeed * .6f : movementSpeed * 1f;
+
+        cc.Move(moveVector * .8f * Time.deltaTime);
+
+        velocity.y += gravityScale * Time.deltaTime;
+
+        cc.Move(velocity * Time.deltaTime);
+
+    }
+
+    private void CoyateTimer()
+    {
+        if (isGrounded)
+        {
+            groundedTimer = groundedTimerDuration;
+        }
+
+        else if (groundedTimer > 0 && !isGrounded)
+        {
+            groundedTimer -= Time.deltaTime;
+            isGrounded = true;
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = isGrounded ? Color.green : Color.red;
+        Gizmos.DrawSphere(groundCheckTransform.position, groundDistance);
+    }
+
+}
+
